@@ -1,136 +1,107 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using SIA102_Midterms_2.DTOs;
+using SIA102_Midterms_2.Extensions;
 using SIA102_Midterms_2.Models;
+using SIA102_Midterms_2.Repositories;
+using System.Threading.Tasks;
 
 namespace SIA102_Midterms_2.Controllers
 {
     public class AuthorsController : Controller
     {
-        private readonly pubsContext _context;
+        private readonly IAuthorRepository _authorRepo;
+        private readonly IMapper _mapper;
 
-        public AuthorsController(pubsContext context)
+        public AuthorsController(IAuthorRepository authorRepo, IMapper mapper)
         {
-            _context = context;
+            _authorRepo = authorRepo;
+            _mapper = mapper;
+
+            _authorRepo.AuthorAdded += OnAuthorAdded;
+        }
+
+        // EVENT: authoradded
+        private void OnAuthorAdded(Author author)
+        {
+            Console.WriteLine($"New author added: {author.FullName()}");
+            // Could also log to database, send an email, etc.
         }
 
         // GET: Authors
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Authors.ToListAsync());
+            var authors = await _authorRepo.GetAllAsync();
+            var dtos = _mapper.Map<List<AuthorReadDTO>>(authors);
+            return View(dtos);
         }
 
         // GET: Authors/Details/5
         public async Task<IActionResult> Details(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
-            var author = await _context.Authors
-                .FirstOrDefaultAsync(m => m.AuId == id);
-            if (author == null)
-            {
-                return NotFound();
-            }
+            var author = await _authorRepo.GetByIdAsync(id);
+            if (author == null) return NotFound();
 
-            return View(author);
+            var dto = _mapper.Map<AuthorReadDTO>(author);
+            return View(dto);
         }
 
         // GET: Authors/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        public IActionResult Create() => View();
 
         // POST: Authors/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("AuId,AuLname,AuFname,Phone,Address,City,State,Zip,Contract")] Author author)
+        public async Task<IActionResult> Create(AuthorCreateDTO dto)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(author);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(author);
+            if (!ModelState.IsValid) return View(dto);
+
+            var author = _mapper.Map<Author>(dto);
+            await _authorRepo.AddAsync(author);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Authors/Edit/5
         public async Task<IActionResult> Edit(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
-            var author = await _context.Authors.FindAsync(id);
-            if (author == null)
-            {
-                return NotFound();
-            }
-            return View(author);
+            var author = await _authorRepo.GetByIdAsync(id);
+            if (author == null) return NotFound();
+
+            var dto = _mapper.Map<AuthorUpdateDTO>(author);
+            return View(dto);
         }
 
         // POST: Authors/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("AuId,AuLname,AuFname,Phone,Address,City,State,Zip,Contract")] Author author)
+        public async Task<IActionResult> Edit(string id, AuthorUpdateDTO dto)
         {
-            if (id != author.AuId)
-            {
-                return NotFound();
-            }
+            if (id != dto.AuId) return NotFound();
+            if (!ModelState.IsValid) return View(dto);
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(author);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!AuthorExists(author.AuId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(author);
+            var author = await _authorRepo.GetByIdAsync(id);
+            if (author == null) return NotFound();
+
+            _mapper.Map(dto, author); // Maps DTO properties into existing entity
+            await _authorRepo.UpdateAsync(author);
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Authors/Delete/5
         public async Task<IActionResult> Delete(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (string.IsNullOrEmpty(id)) return NotFound();
 
-            var author = await _context.Authors
-                .FirstOrDefaultAsync(m => m.AuId == id);
-            if (author == null)
-            {
-                return NotFound();
-            }
+            var author = await _authorRepo.GetByIdAsync(id);
+            if (author == null) return NotFound();
 
-            return View(author);
+            var dto = _mapper.Map<AuthorReadDTO>(author);
+            return View(dto);
         }
 
         // POST: Authors/Delete/5
@@ -138,19 +109,8 @@ namespace SIA102_Midterms_2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            var author = await _context.Authors.FindAsync(id);
-            if (author != null)
-            {
-                _context.Authors.Remove(author);
-            }
-
-            await _context.SaveChangesAsync();
+            await _authorRepo.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool AuthorExists(string id)
-        {
-            return _context.Authors.Any(e => e.AuId == id);
         }
     }
 }

@@ -1,6 +1,7 @@
 using SIA102_Midterms_2.Models;
 using SIA102_Midterms_2.Models.Mapping;
 using Microsoft.EntityFrameworkCore;
+using SIA102_Midterms_2.Repositories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,11 @@ builder.Services.AddDbContext<pubsContext>(options =>
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddProfile<AuthorProfile>();
+    cfg.AddProfile<PublisherProfile>();
+    cfg.AddProfile<TitleProfile>();
 });
+
+builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 
 var app = builder.Build();
 

@@ -1,156 +1,90 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using SIA102_Midterms_2.DTOs;
 using SIA102_Midterms_2.Models;
+using SIA102_Midterms_2.Repositories;
+using System.Threading.Tasks;
 
 namespace SIA102_Midterms_2.Controllers
 {
     public class PublishersController : Controller
     {
-        private readonly pubsContext _context;
+        private readonly IPublisherRepository _publisherRepo;
+        private readonly IMapper _mapper;
 
-        public PublishersController(pubsContext context)
+        public PublishersController(IPublisherRepository publisherRepo, IMapper mapper)
         {
-            _context = context;
+            _publisherRepo = publisherRepo;
+            _mapper = mapper;
+            _publisherRepo.PublisherAdded += OnPublisherAdded;
         }
 
-        // GET: Publishers
+        private void OnPublisherAdded(Publisher publisher)
+        {
+            Console.WriteLine($"New publisher added: {publisher.PubName}");
+        }
+
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Publishers.ToListAsync());
+            var publishers = await _publisherRepo.GetAllAsync();
+            var dtos = _mapper.Map<List<PublisherReadDTO>>(publishers);
+            return View(dtos);
         }
 
-        // GET: Publishers/Details/5
         public async Task<IActionResult> Details(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var publisher = await _context.Publishers
-                .FirstOrDefaultAsync(m => m.PubId == id);
-            if (publisher == null)
-            {
-                return NotFound();
-            }
-
-            return View(publisher);
+            var publisher = await _publisherRepo.GetByIdAsync(id);
+            if (publisher == null) return NotFound();
+            var dto = _mapper.Map<PublisherReadDTO>(publisher);
+            return View(dto);
         }
 
-        // GET: Publishers/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        public IActionResult Create() => View();
 
-        // POST: Publishers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("PubId,PubName,City,State,Country")] Publisher publisher)
+        public async Task<IActionResult> Create(PublisherCreateDTO dto)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(publisher);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(publisher);
-        }
+            if (!ModelState.IsValid) return View(dto);
 
-        // GET: Publishers/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var publisher = await _context.Publishers.FindAsync(id);
-            if (publisher == null)
-            {
-                return NotFound();
-            }
-            return View(publisher);
-        }
-
-        // POST: Publishers/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("PubId,PubName,City,State,Country")] Publisher publisher)
-        {
-            if (id != publisher.PubId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(publisher);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PublisherExists(publisher.PubId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(publisher);
-        }
-
-        // GET: Publishers/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var publisher = await _context.Publishers
-                .FirstOrDefaultAsync(m => m.PubId == id);
-            if (publisher == null)
-            {
-                return NotFound();
-            }
-
-            return View(publisher);
-        }
-
-        // POST: Publishers/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
-            var publisher = await _context.Publishers.FindAsync(id);
-            if (publisher != null)
-            {
-                _context.Publishers.Remove(publisher);
-            }
-
-            await _context.SaveChangesAsync();
+            var publisher = _mapper.Map<Publisher>(dto);
+            await _publisherRepo.AddAsync(publisher);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool PublisherExists(string id)
+        public async Task<IActionResult> Edit(string id)
         {
-            return _context.Publishers.Any(e => e.PubId == id);
+            var publisher = await _publisherRepo.GetByIdAsync(id);
+            if (publisher == null) return NotFound();
+            var dto = _mapper.Map<PublisherUpdateDTO>(publisher);
+            return View(dto);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(PublisherUpdateDTO dto)
+        {
+            if (!ModelState.IsValid) return View(dto);
+
+            var publisher = _mapper.Map<Publisher>(dto);
+            await _publisherRepo.UpdateAsync(publisher);
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Delete(string id)
+        {
+            var publisher = await _publisherRepo.GetByIdAsync(id);
+            if (publisher == null) return NotFound();
+            var dto = _mapper.Map<PublisherDeleteDTO>(publisher);
+            return View(dto);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(PublisherDeleteDTO dto)
+        {
+            await _publisherRepo.DeleteAsync(dto.PubId);
+            return RedirectToAction(nameof(Index));
         }
     }
 }
