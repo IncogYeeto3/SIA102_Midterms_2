@@ -12,9 +12,11 @@ namespace SIA102_Midterms_2.Models.Mapping
             CreateMap<Publisher, PublisherReadDTO>();
             CreateMap<Publisher, PublisherCreateDTO>();
             CreateMap<Publisher, PublisherUpdateDTO>();
+            CreateMap<Publisher, PublisherDeleteDTO>();
             CreateMap<PublisherReadDTO, Publisher>();
             CreateMap<PublisherCreateDTO, Publisher>();
             CreateMap<PublisherUpdateDTO, Publisher>();
+            CreateMap<PublisherDeleteDTO, Publisher>();
         }
     }
 }

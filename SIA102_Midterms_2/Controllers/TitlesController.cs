@@ -1,163 +1,107 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using SIA102_Midterms_2.DTOs;
 using SIA102_Midterms_2.Models;
+using SIA102_Midterms_2.Repositories;
+using System.Threading.Tasks;
 
 namespace SIA102_Midterms_2.Controllers
 {
     public class TitlesController : Controller
     {
+        private readonly ITitleRepository _titleRepo;
+        private readonly IMapper _mapper;
         private readonly pubsContext _context;
 
-        public TitlesController(pubsContext context)
+        public TitlesController(ITitleRepository titleRepo, IMapper mapper, pubsContext context)
         {
+            _titleRepo = titleRepo;
+            _mapper = mapper;
             _context = context;
         }
 
         // GET: Titles
         public async Task<IActionResult> Index()
         {
-            var pubsContext = _context.Titles.Include(t => t.Pub);
-            return View(await pubsContext.ToListAsync());
+            var titles = await _titleRepo.GetAllAsync();
+            var dtos = _mapper.Map<IEnumerable<TitleReadDTO>>(titles);
+            return View(dtos);
         }
 
-        // GET: Titles/Details/5
+        // GET: Details
         public async Task<IActionResult> Details(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var title = await _context.Titles
-                .Include(t => t.Pub)
-                .FirstOrDefaultAsync(m => m.TitleId == id);
-            if (title == null)
-            {
-                return NotFound();
-            }
+            var title = await _titleRepo.GetByIdAsync(id);
+            if (title == null) return NotFound();
 
-            return View(title);
+            return View(_mapper.Map<TitleReadDTO>(title));
         }
 
-        // GET: Titles/Create
+        // GET: Create
         public IActionResult Create()
         {
-            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubId");
+            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubName");
             return View();
         }
 
-        // POST: Titles/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TitleId,Title1,Type,PubId,Price,Advance,Royalty,YtdSales,Notes,Pubdate")] Title title)
+        public async Task<IActionResult> Create(TitleCreateDTO dto)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(title);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubId", title.PubId);
-            return View(title);
-        }
+            if (!ModelState.IsValid) return View(dto);
 
-        // GET: Titles/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var title = await _context.Titles.FindAsync(id);
-            if (title == null)
-            {
-                return NotFound();
-            }
-            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubId", title.PubId);
-            return View(title);
-        }
-
-        // POST: Titles/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("TitleId,Title1,Type,PubId,Price,Advance,Royalty,YtdSales,Notes,Pubdate")] Title title)
-        {
-            if (id != title.TitleId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(title);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TitleExists(title.TitleId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubId", title.PubId);
-            return View(title);
-        }
-
-        // GET: Titles/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var title = await _context.Titles
-                .Include(t => t.Pub)
-                .FirstOrDefaultAsync(m => m.TitleId == id);
-            if (title == null)
-            {
-                return NotFound();
-            }
-
-            return View(title);
-        }
-
-        // POST: Titles/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
-            var title = await _context.Titles.FindAsync(id);
-            if (title != null)
-            {
-                _context.Titles.Remove(title);
-            }
-
-            await _context.SaveChangesAsync();
+            var title = _mapper.Map<Title>(dto);
+            await _titleRepo.AddAsync(title);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool TitleExists(string id)
+        // GET: Edit
+        public async Task<IActionResult> Edit(string id)
         {
-            return _context.Titles.Any(e => e.TitleId == id);
+            if (id == null) return NotFound();
+
+            var title = await _titleRepo.GetByIdAsync(id);
+            if (title == null) return NotFound();
+
+            ViewData["PubId"] = new SelectList(_context.Publishers, "PubId", "PubName", title.PubId);
+            return View(_mapper.Map<TitleUpdateDTO>(title));
+        }
+
+        // POST: Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, TitleUpdateDTO dto)
+        {
+            if (!ModelState.IsValid) return View(dto);
+            if (id != dto.TitleId) return NotFound();
+
+            var title = _mapper.Map<Title>(dto);
+            await _titleRepo.UpdateAsync(title);
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Delete
+        public async Task<IActionResult> Delete(string id)
+        {
+            if (id == null) return NotFound();
+
+            var title = await _titleRepo.GetByIdAsync(id);
+            if (title == null) return NotFound();
+
+            return View(_mapper.Map<TitleReadDTO>(title));
+        }
+
+        // POST: DeleteConfirmed
+        [HttpPost, ActionName("DeleteConfirmed")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(string id)
+        {
+            await _titleRepo.DeleteAsync(id);
+            return RedirectToAction(nameof(Index));
         }
     }
 }
