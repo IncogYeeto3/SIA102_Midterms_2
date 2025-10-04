@@ -23,7 +23,7 @@ builder.Services.AddAutoMapper(cfg =>
 
 builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
 builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
-builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
+builder.Services.AddScoped<ITitleRepository, TitleRepository>();
 
 var app = builder.Build();
 

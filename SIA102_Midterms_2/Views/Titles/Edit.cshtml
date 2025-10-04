@@ -1,18 +1,19 @@
-﻿@model SIA102_Midterms_2.Models.Title
+﻿@model SIA102_Midterms_2.DTOs.TitleUpdateDTO
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Title";
 }
 
-<h1>Edit</h1>
+<h1>Edit Title</h1>
 
-<h4>Title</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
+    <div class="col-md-6">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
             <input type="hidden" asp-for="TitleId" />
+
             <div class="form-group">
                 <label asp-for="Title1" class="control-label"></label>
                 <input asp-for="Title1" class="form-control" />
@@ -50,14 +51,15 @@
             </div>
             <div class="form-group">
                 <label asp-for="Notes" class="control-label"></label>
-                <input asp-for="Notes" class="form-control" />
+                <textarea asp-for="Notes" class="form-control"></textarea>
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Pubdate" class="control-label"></label>
-                <input asp-for="Pubdate" class="form-control" />
+                <input asp-for="Pubdate" type="date" class="form-control" />
                 <span asp-validation-for="Pubdate" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -70,5 +72,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

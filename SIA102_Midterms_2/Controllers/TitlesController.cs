@@ -95,12 +95,11 @@ namespace SIA102_Midterms_2.Controllers
             return View(_mapper.Map<TitleReadDTO>(title));
         }
 
-        // POST: DeleteConfirmed
         [HttpPost, ActionName("DeleteConfirmed")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        public async Task<IActionResult> DeleteConfirmed(string TitleId)
         {
-            await _titleRepo.DeleteAsync(id);
+            await _titleRepo.DeleteAsync(TitleId);
             return RedirectToAction(nameof(Index));
         }
     }
