@@ -1,6 +1,6 @@
 ﻿namespace SIA102_Midterms_2.DTOs
 {
-    public class UpdateAuthorDTO
+    public class AuthorUpdateDTO
     {
         public string AuId { get; set; } // Identifier for the update
         public string AuLname { get; set; }

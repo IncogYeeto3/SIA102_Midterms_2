@@ -2,7 +2,7 @@
 
 namespace SIA102_Midterms_2.DTOs
 {
-    public class AuthorDTO
+    public class AuthorReadDTO
     {
         public string AuId { get; set; }
         public string AuLname { get; set; }

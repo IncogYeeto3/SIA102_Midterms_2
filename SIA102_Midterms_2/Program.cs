@@ -1,7 +1,22 @@
+using SIA102_Midterms_2.Models;
+using SIA102_Midterms_2.Models.Mapping;
+using Microsoft.EntityFrameworkCore;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Registeres DbContext
+builder.Services.AddDbContext<pubsContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("PubsDb")));
+
+//Registererseas Mapping Auto
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<AuthorProfile>();
+});
 
 var app = builder.Build();
 
