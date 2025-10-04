@@ -1,0 +1,31 @@
+﻿@model List<SIA102_Midterms_2.DTOs.AuthorReadDTO>
+
+@{
+    ViewData["Title"] = "Contracted Authors";
+}
+
+<h1>Contracted Authors</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Author ID</th>
+            <th>Full Name</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Contract</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var author in Model)
+        {
+            <tr>
+                <td>@author.AuId</td>
+                <td>@(author.AuFname + " " + author.AuLname)</td>
+                <td>@author.Phone</td>
+                <td>@author.City</td>
+                <td>@author.Contract</td>
+            </tr>
+        }
+    </tbody>
+</table>

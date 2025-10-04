@@ -1,4 +1,5 @@
-﻿using SIA102_Midterms_2.Models;
+﻿using SIA102_Midterms_2.Delegates;
+using SIA102_Midterms_2.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,5 +15,6 @@ namespace SIA102_Midterms_2.Repositories
         Task<bool> ExistsAsync(string id);
 
         event Action<Author> AuthorAdded;
+        Task<List<Author>> GetFilteredAuthorsAsync(AuthorFilter filter);
     }
 }

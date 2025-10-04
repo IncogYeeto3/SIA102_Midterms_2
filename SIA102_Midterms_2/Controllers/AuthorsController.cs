@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using SIA102_Midterms_2.Delegates;
 using SIA102_Midterms_2.DTOs;
 using SIA102_Midterms_2.Extensions;
 using SIA102_Midterms_2.Models;
@@ -39,14 +40,21 @@ namespace SIA102_Midterms_2.Controllers
         // GET: Authors/Details/5
         public async Task<IActionResult> Details(string id)
         {
-            if (string.IsNullOrEmpty(id)) return NotFound();
+            if (id == null) return NotFound();
 
             var author = await _authorRepo.GetByIdAsync(id);
             if (author == null) return NotFound();
 
+            // Use the extension method
+            var fullName = author.FullName();
+
+            // Optionally pass it to the view
+            ViewBag.FullName = fullName;
+
             var dto = _mapper.Map<AuthorReadDTO>(author);
             return View(dto);
         }
+
 
         // GET: Authors/Create
         public IActionResult Create() => View();
@@ -112,5 +120,29 @@ namespace SIA102_Midterms_2.Controllers
             await _authorRepo.DeleteAsync(id);
             return RedirectToAction(nameof(Index));
         }
+
+        // DELEGATE
+        public async Task<IActionResult> ContractedAuthors()
+        {
+            // Delegate with lambda expression
+            AuthorFilter contractFilter = a => a.Contract;
+
+            var authors = await _authorRepo.GetFilteredAuthorsAsync(contractFilter);
+            var dtos = _mapper.Map<List<AuthorReadDTO>>(authors);
+
+            return View(dtos);
+        }
+
+        public async Task<IActionResult> NonContractedAuthors()
+        {
+            // Delegate with lambda expression for non-contracted authors
+            AuthorFilter nonContractFilter = a => !a.Contract;
+
+            var authors = await _authorRepo.GetFilteredAuthorsAsync(nonContractFilter);
+            var dtos = _mapper.Map<List<AuthorReadDTO>>(authors);
+
+            return View(dtos);
+        }
+
     }
 }

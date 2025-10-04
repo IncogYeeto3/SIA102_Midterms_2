@@ -1,5 +1,6 @@
-﻿using SIA102_Midterms_2.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using SIA102_Midterms_2.Delegates;
+using SIA102_Midterms_2.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,6 +18,11 @@ namespace SIA102_Midterms_2.Repositories
             _context = context;
         }
 
+        public async Task<List<Author>> GetFilteredAuthorsAsync(AuthorFilter filter)
+        {
+            var authors = await _context.Authors.ToListAsync();
+            return authors.Where(a => filter(a)).ToList();
+        }
 
 
         public async Task<List<Author>> GetAllAsync()
